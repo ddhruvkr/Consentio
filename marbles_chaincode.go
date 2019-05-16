@@ -186,6 +186,8 @@ func (t *SimpleChaincode) accessConsent(stub shim.ChaincodeStubInterface, args [
 		marbleAsBytes, err := stub.GetState(unq_id)
 		if err != nil {
 			return shim.Error("Failed to get marble: " + err.Error())
+		} else if marbleAsBytes == nil {
+			return shim.Error("Consent not granted")
 		} else if marbleAsBytes != nil {
 			marbleToTransfer := marble{}
 			err = json.Unmarshal(marbleAsBytes, &marbleToTransfer) //unmarshal it aka JSON.parse()
