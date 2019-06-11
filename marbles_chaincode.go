@@ -104,6 +104,7 @@ type marble struct {
 	End_date     string  `json:"e_date"` 
 	UserIDs      map[string]int  `json:"u_ids"`
 	AccessType string `json:"acctype_id"`
+	WID			 string  `json:"w_id"`
 }
 
 // ===================================================================================
@@ -147,9 +148,9 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 
 func (t *SimpleChaincode) accessConsent(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 
-	// role id, start date, end date, column ids 
-	if len(args) != 5 {
-		return shim.Error("Incorrect number of arguments. Expecting 5")
+	// role id, start date, end date, column ids, access type, watchdog id
+	if len(args) != 6 {
+		return shim.Error("Incorrect number of arguments. Expecting 6")
 	}
 	// ==== Input sanitation ====
 	fmt.Println("- start init marble")
@@ -168,13 +169,14 @@ func (t *SimpleChaincode) accessConsent(stub shim.ChaincodeStubInterface, args [
 	s_date := strings.ToLower(args[1])
 	e_date := strings.ToLower(args[2])
 	r_id := strings.ToLower(args[0])
+	w_id := strings.ToLower(args[5])
 	acctype_id := strings.ToLower(args[4])
 	result := make(map[string][]string)
 	user_ids := make(map[string]int)
 	ids := strings.Split(args[3], ",")
 	var unq_id string
 	for _, c_id := range ids {
-		unq_id = c_id + r_id + s_date + e_date + acctype_id
+		unq_id = c_id + r_id + s_date + e_date + acctype_id + w_id
 		marbleAsBytes, err := stub.GetState(unq_id)
 		if err != nil {
 			return shim.Error("Failed to get marble: " + err.Error())
@@ -206,8 +208,8 @@ func (t *SimpleChaincode) accessConsent(stub shim.ChaincodeStubInterface, args [
 
 func (t *SimpleChaincode) accessConsentNewDesign(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 
-	// role id, start date, end date, column ids 
-	if len(args) != 5 {
+	// role id, start date, end date, column ids, access type, watchdog id
+	if len(args) != 6 {
 		return shim.Error("Incorrect number of arguments. Expecting 5")
 	}
 	// ==== Input sanitation ====
@@ -227,13 +229,14 @@ func (t *SimpleChaincode) accessConsentNewDesign(stub shim.ChaincodeStubInterfac
 	s_date := strings.ToLower(args[1])
 	e_date := strings.ToLower(args[2])
 	r_id := strings.ToLower(args[0])
+	w_id := strings.ToLower(args[5])
 	acctype_id := strings.ToLower(args[4])
 	result := make(map[string][]string)
 	user_ids := make(map[string]int)
 	ids := strings.Split(args[3], ",")
 	var unq_id string
 	for _, c_id := range ids {
-		unq_id = c_id + r_id + s_date + e_date + acctype_id
+		unq_id = c_id + r_id + s_date + e_date + acctype_id + w_id
 		marbleAsBytes, err := stub.GetState(unq_id)
 		if err != nil {
 			return shim.Error("Failed to get marble: " + err.Error())
@@ -250,7 +253,7 @@ func (t *SimpleChaincode) accessConsentNewDesign(stub shim.ChaincodeStubInterfac
 				for k := range user_ids {
 					// even if userids are present in the world state, i.e consent is there, still check if no revoke keys exist
 					// if they do for a patient then don't consider the patient id as the patient has revoked the consent he/she granted but it is still not reflected
-					unq_id = k + c_id + r_id + s_date + e_date + acctype_id
+					unq_id = k + c_id + r_id + s_date + e_date + acctype_id + w_id
 					marbleAsBytes, _ := stub.GetState(unq_id)
 					// if a revoke entry exists then dont count this user in the list of users who have given consent
 					if marbleAsBytes == nil {
@@ -289,10 +292,10 @@ func remove(s []string, i int) []string {
 
 func (t *SimpleChaincode) updateConsent(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 
-	if len(args) != 7 {
-		return shim.Error("Incorrect number of arguments. Expecting 7")
+	if len(args) != 8 {
+		return shim.Error("Incorrect number of arguments. Expecting 8")
 	}
-	//patient_id, action, role_id, start date, end date, arr[column ids]
+	//patient_id, action, role_id, start date, end date, arr[column ids], accessType id, watchdog id
 	// ==== Input sanitation ====
 	fmt.Println("- start init marble")
 	if len(args[0]) <= 0 {
@@ -312,12 +315,13 @@ func (t *SimpleChaincode) updateConsent(stub shim.ChaincodeStubInterface, args [
 	p_id := strings.ToLower(args[0])
 	acctype_id := strings.ToLower(args[6])
 	action := strings.ToLower(args[1])
+	w_id := strings.ToLower(args[7])
 	r_id := strings.ToLower(args[2])
 	ids := strings.Split(args[5], ",")
 	var unq_id string
 	for _, c_id := range ids {
 		// TODO: we might not need to store all this extra information, can it make a diffence in performance?
-		unq_id = c_id + r_id + s_date + e_date + acctype_id
+		unq_id = c_id + r_id + s_date + e_date + acctype_id + w_id
 		fmt.Println(unq_id)
 		marbleAsBytes, err := stub.GetState(unq_id)
 		if err != nil {
@@ -367,7 +371,7 @@ func (t *SimpleChaincode) updateConsent(stub shim.ChaincodeStubInterface, args [
 			user_ids := make(map[string]int)
 			user_ids[p_id] = 1
 			fmt.Println("inside1")
-			marble := &marble{unq_id, c_id, r_id, s_date, e_date, user_ids, acctype_id}
+			marble := &marble{unq_id, c_id, r_id, s_date, e_date, user_ids, acctype_id, w_id}
 			marbleJSONasBytes, err := json.Marshal(marble)
 			if err != nil {
 				return shim.Error(err.Error())
@@ -387,10 +391,10 @@ func (t *SimpleChaincode) updateConsent(stub shim.ChaincodeStubInterface, args [
 
 func (t *SimpleChaincode) updateConsentNewDesign(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 
-	if len(args) != 7 {
-		return shim.Error("Incorrect number of arguments. Expecting 7")
+	if len(args) != 8 {
+		return shim.Error("Incorrect number of arguments. Expecting 8")
 	}
-	//patient_id, action, role_id, start date, end date, arr[column ids]
+	//patient_id, action, role_id, start date, end date, arr[column ids], accessType id, watchdog id
 	// ==== Input sanitation ====
 	fmt.Println("- start init marble")
 	if len(args[0]) <= 0 {
@@ -407,6 +411,7 @@ func (t *SimpleChaincode) updateConsentNewDesign(stub shim.ChaincodeStubInterfac
 	}
 	s_date := strings.ToLower(args[3])
 	e_date := strings.ToLower(args[4])
+	w_id := strings.ToLower(args[7])
 	p_id := strings.ToLower(args[0])
 	acctype_id := strings.ToLower(args[6])
 	action := strings.ToLower(args[1])
@@ -415,7 +420,7 @@ func (t *SimpleChaincode) updateConsentNewDesign(stub shim.ChaincodeStubInterfac
 	var unq_id string
 	if action == "g" {
 		for _, c_id := range ids {
-			unq_id = c_id + r_id + s_date + e_date + acctype_id
+			unq_id = c_id + r_id + s_date + e_date + acctype_id + w_id
 			fmt.Println(unq_id)
 			marbleAsBytes, err := stub.GetState(unq_id)
 			changedone := false
@@ -444,10 +449,10 @@ func (t *SimpleChaincode) updateConsentNewDesign(stub shim.ChaincodeStubInterfac
 					user_ids[p_id] = 1
 					fmt.Println("inside1")
 					changedone = true
-					marbleToTransfer = &marble{unq_id, c_id, r_id, s_date, e_date, user_ids, acctype_id}
+					marbleToTransfer = &marble{unq_id, c_id, r_id, s_date, e_date, user_ids, acctype_id, w_id}
 				}
 				// remove the revoke entry from the key value pair
-				p_unq_id := p_id + c_id + r_id + s_date + e_date + acctype_id
+				p_unq_id := p_id + c_id + r_id + s_date + e_date + acctype_id + w_id
 				marbleAsBytes, err := stub.GetState(p_unq_id)
 				// if a revoke entry exists then delete it
 				if marbleAsBytes != nil {
@@ -483,14 +488,14 @@ func (t *SimpleChaincode) updateConsentNewDesign(stub shim.ChaincodeStubInterfac
 		// if revoke, then no need to modify standard key-value pair, first check if an entry already exists in the patient revoke key-value pair
 		// if yes no need to do anything
 		for _, c_id := range ids {
-			p_unq_id := p_id + c_id + r_id + s_date + e_date + acctype_id
+			p_unq_id := p_id + c_id + r_id + s_date + e_date + acctype_id + w_id
 			marbleAsBytes, err := stub.GetState(p_unq_id)
 			if err != nil {
 				return shim.Error("Failed to get marble: " + err.Error())
 			} else if marbleAsBytes == nil {
 				user_ids := make(map[string]int)
 				// TODO: we might not need to store all this extra information, can it make a diffence in performance?
-				marble := &marble{p_unq_id, c_id, r_id, s_date, e_date, user_ids, acctype_id}
+				marble := &marble{p_unq_id, c_id, r_id, s_date, e_date, user_ids, acctype_id, w_id}
 				marbleJSONasBytes, err := json.Marshal(marble)
 				if err != nil {
 					return shim.Error(err.Error())
@@ -651,4 +656,3 @@ func getQueryResultForQueryString(stub shim.ChaincodeStubInterface, queryString 
 
 	return shim.Success(buffer.Bytes())
 }*/
-
