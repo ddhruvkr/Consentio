@@ -98,13 +98,7 @@ type SimpleChaincode struct {
 
 type marble struct {
 	uniqueID     string  `json:"unq_id"`
-	ColumnID     string  `json:"c_id"`
-	RoleID       string  `json:"r_id"`
-	Start_date   string  `json:"s_date"`
-	End_date     string  `json:"e_date"` 
 	UserIDs      map[string]int  `json:"u_ids"`
-	AccessType string `json:"acctype_id"`
-	WID			 string  `json:"w_id"`
 }
 
 // ===================================================================================
@@ -127,7 +121,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface) pb.Response {
 // ========================================
 func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 	function, args := stub.GetFunctionAndParameters()
-	fmt.Println("invoke is running " + function)
+	//fmt.Println("invoke is running " + function)
 
 	// Handle different functions
 	if function == "accessConsent" { //create a new marble
@@ -153,7 +147,7 @@ func (t *SimpleChaincode) accessConsent(stub shim.ChaincodeStubInterface, args [
 		return shim.Error("Incorrect number of arguments. Expecting 6")
 	}
 	// ==== Input sanitation ====
-	fmt.Println("- start init marble")
+	//fmt.Println("- start init marble")
 	if len(args[0]) <= 0 {
 		return shim.Error("1st argument must be a non-empty string")
 	}
@@ -201,7 +195,7 @@ func (t *SimpleChaincode) accessConsent(stub shim.ChaincodeStubInterface, args [
 		// display error message even no consent certificate can be given
 		return shim.Error("Consent not found")
 	}
-	fmt.Println("- end init marble")
+	//fmt.Println("- end init marble")
 	return shim.Success(nil)
 }
 
@@ -213,7 +207,7 @@ func (t *SimpleChaincode) accessConsentNewDesign(stub shim.ChaincodeStubInterfac
 		return shim.Error("Incorrect number of arguments. Expecting 5")
 	}
 	// ==== Input sanitation ====
-	fmt.Println("- start init marble")
+	//fmt.Println("- start init marble")
 	if len(args[0]) <= 0 {
 		return shim.Error("1st argument must be a non-empty string")
 	}
@@ -271,7 +265,7 @@ func (t *SimpleChaincode) accessConsentNewDesign(stub shim.ChaincodeStubInterfac
 		// display error message even no consent certificate can be given
 		return shim.Error("Consent not found")
 	}
-	fmt.Println("- end init marble")
+	//fmt.Println("- end init marble")
 	return shim.Success(nil)
 }
 
@@ -297,7 +291,7 @@ func (t *SimpleChaincode) updateConsent(stub shim.ChaincodeStubInterface, args [
 	}
 	//patient_id, action, role_id, start date, end date, arr[column ids], accessType id, watchdog id
 	// ==== Input sanitation ====
-	fmt.Println("- start init marble")
+	//fmt.Println("- start init marble")
 	if len(args[0]) <= 0 {
 		return shim.Error("1st argument must be a non-empty string")
 	}
@@ -322,7 +316,7 @@ func (t *SimpleChaincode) updateConsent(stub shim.ChaincodeStubInterface, args [
 	for _, c_id := range ids {
 		// TODO: we might not need to store all this extra information, can it make a diffence in performance?
 		unq_id = c_id + r_id + s_date + e_date + acctype_id + w_id
-		fmt.Println(unq_id)
+		//fmt.Println(unq_id)
 		marbleAsBytes, err := stub.GetState(unq_id)
 		if err != nil {
 			return shim.Error("Failed to get marble: " + err.Error())
@@ -350,7 +344,7 @@ func (t *SimpleChaincode) updateConsent(stub shim.ChaincodeStubInterface, args [
 					if err != nil {
 						return shim.Error("Failed to delete state:" + err.Error())
 					}
-					fmt.Println("- end init marble")
+					//fmt.Println("- end init marble")
 					return shim.Success(nil)
 				}
 			}
@@ -367,36 +361,36 @@ func (t *SimpleChaincode) updateConsent(stub shim.ChaincodeStubInterface, args [
 			}
 		} else if action == "g" {
 			// if a configuration does not exist create one
-			fmt.Println("inside")
+			//fmt.Println("inside")
 			user_ids := make(map[string]int)
 			user_ids[p_id] = 1
-			fmt.Println("inside1")
-			marble := &marble{unq_id, c_id, r_id, s_date, e_date, user_ids, acctype_id, w_id}
+			//fmt.Println("inside1")
+			marble := &marble{unq_id, user_ids}
 			marbleJSONasBytes, err := json.Marshal(marble)
 			if err != nil {
 				return shim.Error(err.Error())
 			}
-			fmt.Println("inside2")
+			//fmt.Println("inside2")
 			// === Save marble to state ===
 			err = stub.PutState(unq_id, marbleJSONasBytes)
 			if err != nil {
 				return shim.Error(err.Error())
 			}
-			fmt.Println("inside3")
+			//fmt.Println("inside3")
 		}
 	}
-	fmt.Println("- end init marble")
+	//fmt.Println("- end init marble")
 	return shim.Success(nil)
 }
 
 func (t *SimpleChaincode) updateConsentNewDesign(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 
 	if len(args) != 8 {
-		return shim.Error("Incorrect number of arguments. Expecting 8")
+		return shim.Error("Incorrect number of arguments. Expecting 9")
 	}
 	//patient_id, action, role_id, start date, end date, arr[column ids], accessType id, watchdog id
 	// ==== Input sanitation ====
-	fmt.Println("- start init marble")
+	//fmt.Println("- start init marble")
 	if len(args[0]) <= 0 {
 		return shim.Error("1st argument must be a non-empty string")
 	}
@@ -421,7 +415,7 @@ func (t *SimpleChaincode) updateConsentNewDesign(stub shim.ChaincodeStubInterfac
 	if action == "g" {
 		for _, c_id := range ids {
 			unq_id = c_id + r_id + s_date + e_date + acctype_id + w_id
-			fmt.Println(unq_id)
+			//fmt.Println(unq_id)
 			marbleAsBytes, err := stub.GetState(unq_id)
 			changedone := false
 			if err != nil {
@@ -444,12 +438,12 @@ func (t *SimpleChaincode) updateConsentNewDesign(stub shim.ChaincodeStubInterfac
 					marbleToTransfer.UserIDs = user_ids
 				} else {
 					// if a configuration does not exist create one
-					fmt.Println("inside")
+					//fmt.Println("inside")
 					user_ids := make(map[string]int)
 					user_ids[p_id] = 1
-					fmt.Println("inside1")
+					//fmt.Println("inside1")
 					changedone = true
-					marbleToTransfer = &marble{unq_id, c_id, r_id, s_date, e_date, user_ids, acctype_id, w_id}
+					marbleToTransfer = &marble{unq_id, user_ids}
 				}
 				// remove the revoke entry from the key value pair
 				p_unq_id := p_id + c_id + r_id + s_date + e_date + acctype_id + w_id
@@ -473,14 +467,14 @@ func (t *SimpleChaincode) updateConsentNewDesign(stub shim.ChaincodeStubInterfac
 					if err != nil {
 						return shim.Error(err.Error())
 					}
-					fmt.Println("inside2")
+					//fmt.Println("inside2")
 					//update the new value in the key value pair
 					// === Save marble to state ===
 					err = stub.PutState(unq_id, marbleJSONasBytes)
 					if err != nil {
 						return shim.Error(err.Error())
 					}
-					fmt.Println("inside3")
+					//fmt.Println("inside3")
 				}
 			}
 		}
@@ -495,12 +489,12 @@ func (t *SimpleChaincode) updateConsentNewDesign(stub shim.ChaincodeStubInterfac
 			} else if marbleAsBytes == nil {
 				user_ids := make(map[string]int)
 				// TODO: we might not need to store all this extra information, can it make a diffence in performance?
-				marble := &marble{p_unq_id, c_id, r_id, s_date, e_date, user_ids, acctype_id, w_id}
+				marble := &marble{p_unq_id, user_ids}
 				marbleJSONasBytes, err := json.Marshal(marble)
 				if err != nil {
 					return shim.Error(err.Error())
 				}
-				fmt.Println("inside2")
+				//fmt.Println("inside2")
 				// === Save marble to state ===
 				err = stub.PutState(p_unq_id, marbleJSONasBytes)
 				if err != nil {
@@ -509,7 +503,7 @@ func (t *SimpleChaincode) updateConsentNewDesign(stub shim.ChaincodeStubInterfac
 			}
 		}
 	}
-	fmt.Println("- end init marble")
+	//fmt.Println("- end init marble")
 	return shim.Success(nil)
 }
 
