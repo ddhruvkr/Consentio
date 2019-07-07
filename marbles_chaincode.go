@@ -128,6 +128,8 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 		return t.accessConsent(stub, args)
 	} else if function == "queryMarbles" { //find marbles based on an ad hoc rich query
 		return t.queryMarbles(stub, args)
+	} else if function == "initialize" {
+		return t.initialize(stub, args)
 	} else if function == "updateConsent" {
 		return t.updateConsent(stub, args)
 	} else if function == "accessConsentNewDesign" {
@@ -135,6 +137,7 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 	} else if function == "updateConsentNewDesign" {
 		return t.updateConsentNewDesign(stub, args)
 	}
+	
 
 	fmt.Println("invoke did not find func: " + function) //error
 	return shim.Error("Received unknown function invocation")
@@ -330,11 +333,15 @@ func (t *SimpleChaincode) updateConsent(stub shim.ChaincodeStubInterface, args [
 			user_ids := marbleToTransfer.UserIDs
 			// check if given patientid already exists in the key-value pair
 			index := user_ids[p_id]
-			changedone := false
 			if action == "g" && index == 0 {
 				// if action is grant and the patient id is not present then add
 				user_ids[p_id] = 1
-				changedone = true
+				marbleToTransfer.UserIDs = user_ids
+				marbleJSONasBytes, _ := json.Marshal(marbleToTransfer)
+				err = stub.PutState(unq_id, marbleJSONasBytes) //rewrite the marble
+				if err != nil {
+					return shim.Error(err.Error())
+				}
 			} else if action == "r" && index != 0 {
 				// if action is revoke and the patient id is present then delete
 				delete(user_ids, p_id)
@@ -351,14 +358,173 @@ func (t *SimpleChaincode) updateConsent(stub shim.ChaincodeStubInterface, args [
 			// ideally the state should updated in the database only if user_ids are modified as shown above.
 			// if changedone is not there we would still be doing a put state even if no real change was made to the resource and this could help reduce collisions
 			// but ideally we should also inform the user that no update was made
-			if changedone == true {
+			/*if changedone == true {
 				marbleToTransfer.UserIDs = user_ids
 				marbleJSONasBytes, _ := json.Marshal(marbleToTransfer)
 				err = stub.PutState(unq_id, marbleJSONasBytes) //rewrite the marble
 				if err != nil {
 					return shim.Error(err.Error())
 				}
+			}*/
+		} else if action == "g" {
+			// if a configuration does not exist create one
+			//fmt.Println("inside")
+			user_ids := make(map[string]int)
+			user_ids[p_id] = 1
+			//fmt.Println("inside1")
+			marble := &marble{unq_id, user_ids}
+			marbleJSONasBytes, err := json.Marshal(marble)
+			if err != nil {
+				return shim.Error(err.Error())
 			}
+			//fmt.Println("inside2")
+			// === Save marble to state ===
+			err = stub.PutState(unq_id, marbleJSONasBytes)
+			if err != nil {
+				return shim.Error(err.Error())
+			}
+			//fmt.Println("inside3")
+		}
+	}
+	//fmt.Println("- end init marble")
+	return shim.Success(nil)
+}
+
+func (t *SimpleChaincode) initialize(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+
+	if len(args) != 8 {
+		return shim.Error("Incorrect number of arguments. Expecting 8")
+	}
+	//column id, action, role_id, start date, end date, arr[patient ids], accessType id, watchdog id
+	// ==== Input sanitation ====
+	//fmt.Println("- start init marble")
+	if len(args[0]) <= 0 {
+		return shim.Error("1st argument must be a non-empty string")
+	}
+	if len(args[1]) <= 0 {
+		return shim.Error("2nd argument must be a non-empty string")
+	}
+	if len(args[2]) <= 0 {
+		return shim.Error("3rd argument must be a non-empty string")
+	}
+	if len(args[3]) <= 0 {
+		return shim.Error("4th argument must be a non-empty string")
+	}
+	s_date := strings.ToLower(args[3])
+	e_date := strings.ToLower(args[4])
+	c_id := strings.ToLower(args[0])
+	acctype_id := strings.ToLower(args[6])
+	//action := strings.ToLower(args[1])
+	w_id := strings.ToLower(args[7])
+	r_id := strings.ToLower(args[2])
+	ids := strings.Split(args[5], ",")
+	var unq_id string
+	user_ids := make(map[string]int)
+	for _, p_id := range ids {
+		user_ids[p_id] = 1
+	}
+	unq_id = c_id + r_id + s_date + e_date + acctype_id + w_id
+	marble := &marble{unq_id, user_ids}
+	marbleJSONasBytes, err := json.Marshal(marble)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	//fmt.Println("inside2")
+	// === Save marble to state ===
+	err = stub.PutState(unq_id, marbleJSONasBytes)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	//fmt.Println("- end init marble")
+	return shim.Success(nil)
+}
+
+func (t *SimpleChaincode) updateConsentUTXO(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+
+	if len(args) != 8 {
+		return shim.Error("Incorrect number of arguments. Expecting 8")
+	}
+	//patient_id, action, role_id, start date, end date, arr[column ids], accessType id, watchdog id
+	// ==== Input sanitation ====
+	//fmt.Println("- start init marble")
+	if len(args[0]) <= 0 {
+		return shim.Error("1st argument must be a non-empty string")
+	}
+	if len(args[1]) <= 0 {
+		return shim.Error("2nd argument must be a non-empty string")
+	}
+	if len(args[2]) <= 0 {
+		return shim.Error("3rd argument must be a non-empty string")
+	}
+	if len(args[3]) <= 0 {
+		return shim.Error("4th argument must be a non-empty string")
+	}
+	s_date := strings.ToLower(args[3])
+	e_date := strings.ToLower(args[4])
+	p_id := strings.ToLower(args[0])
+	acctype_id := strings.ToLower(args[6])
+	action := strings.ToLower(args[1])
+	w_id := strings.ToLower(args[7])
+	r_id := strings.ToLower(args[2])
+	ids := strings.Split(args[5], ",")
+	var unq_id string
+	for _, c_id := range ids {
+		// TODO: we might not need to store all this extra information, can it make a diffence in performance?
+		unq_id = c_id + r_id + s_date + e_date + acctype_id + w_id
+		//fmt.Println(unq_id)
+		marbleAsBytes, err := stub.GetState(unq_id)
+		if err != nil {
+			return shim.Error("Failed to get marble: " + err.Error())
+		} else if marbleAsBytes != nil {
+			// if the marble already exists then fetch the user id array and add the new user id
+			marbleToTransfer := marble{}
+			err = json.Unmarshal(marbleAsBytes, &marbleToTransfer) //unmarshal it aka JSON.parse()
+			if err != nil {
+				return shim.Error(err.Error())
+			}
+			user_ids := marbleToTransfer.UserIDs
+			// check if given patientid already exists in the key-value pair
+			index := user_ids[p_id]
+			if action == "g" && index == 0 {
+				// if action is grant and the patient id is not present then add
+				user_ids[p_id] = 1
+				err = stub.DelState(unq_id)
+				if err != nil {
+					return shim.Error("Failed to delete state:" + err.Error())
+				}
+				//fmt.Println("- end init marble")
+				return shim.Success(nil)
+
+				marbleToTransfer.UserIDs = user_ids
+				marbleJSONasBytes, _ := json.Marshal(marbleToTransfer)
+				err = stub.PutState(unq_id, marbleJSONasBytes) //rewrite the marble
+				if err != nil {
+					return shim.Error(err.Error())
+				}
+			} else if action == "r" && index != 0 {
+				// if action is revoke and the patient id is present then delete
+				delete(user_ids, p_id)
+				if len(user_ids) == 0 {
+					// if the last user id is deleted, then delete that setting
+					err = stub.DelState(unq_id)
+					if err != nil {
+						return shim.Error("Failed to delete state:" + err.Error())
+					}
+					//fmt.Println("- end init marble")
+					return shim.Success(nil)
+				}
+			}
+			// ideally the state should updated in the database only if user_ids are modified as shown above.
+			// if changedone is not there we would still be doing a put state even if no real change was made to the resource and this could help reduce collisions
+			// but ideally we should also inform the user that no update was made
+			/*if changedone == true {
+				marbleToTransfer.UserIDs = user_ids
+				marbleJSONasBytes, _ := json.Marshal(marbleToTransfer)
+				err = stub.PutState(unq_id, marbleJSONasBytes) //rewrite the marble
+				if err != nil {
+					return shim.Error(err.Error())
+				}
+			}*/
 		} else if action == "g" {
 			// if a configuration does not exist create one
 			//fmt.Println("inside")
@@ -587,25 +753,19 @@ func getQueryResultForQueryString(stub shim.ChaincodeStubInterface, queryString 
 }
 
 /*func (t *SimpleChaincode) getHistoryForMarble(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-
 	if len(args) < 1 {
 		return shim.Error("Incorrect number of arguments. Expecting 1")
 	}
-
 	marbleName := args[0]
-
 	fmt.Printf("- start getHistoryForMarble: %s\n", marbleName)
-
 	resultsIterator, err := stub.GetHistoryForKey(marbleName)
 	if err != nil {
 		return shim.Error(err.Error())
 	}
 	defer resultsIterator.Close()
-
 	// buffer is a JSON array containing historic values for the marble
 	var buffer bytes.Buffer
 	buffer.WriteString("[")
-
 	bArrayMemberAlreadyWritten := false
 	for resultsIterator.HasNext() {
 		response, err := resultsIterator.Next()
@@ -620,7 +780,6 @@ func getQueryResultForQueryString(stub shim.ChaincodeStubInterface, queryString 
 		buffer.WriteString("\"")
 		buffer.WriteString(response.TxId)
 		buffer.WriteString("\"")
-
 		buffer.WriteString(", \"Value\":")
 		// if it was a delete operation on given key, then we need to set the
 		//corresponding value null. Else, we will write the response.Value
@@ -630,23 +789,18 @@ func getQueryResultForQueryString(stub shim.ChaincodeStubInterface, queryString 
 		} else {
 			buffer.WriteString(string(response.Value))
 		}
-
 		buffer.WriteString(", \"Timestamp\":")
 		buffer.WriteString("\"")
 		buffer.WriteString(time.Unix(response.Timestamp.Seconds, int64(response.Timestamp.Nanos)).String())
 		buffer.WriteString("\"")
-
 		buffer.WriteString(", \"IsDelete\":")
 		buffer.WriteString("\"")
 		buffer.WriteString(strconv.FormatBool(response.IsDelete))
 		buffer.WriteString("\"")
-
 		buffer.WriteString("}")
 		bArrayMemberAlreadyWritten = true
 	}
 	buffer.WriteString("]")
-
 	fmt.Printf("- getHistoryForMarble returning:\n%s\n", buffer.String())
-
 	return shim.Success(buffer.Bytes())
 }*/
