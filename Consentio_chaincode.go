@@ -145,7 +145,7 @@ func (t *SimpleChaincode) updateRole(stub shim.ChaincodeStubInterface, args []st
 	if len(args) != 4 {
 		return shim.Error("Incorrect number of arguments. Expecting 4")
 	}
-	//patient_id, action, role_id, start date, end date, arr[column ids], accessType id, watchdog id
+	// watchdog id, role_id, data consumer id action
 	// ==== Input sanitation ====
 	fmt.Println("- start init marble")
 	if len(args[0]) <= 0 {
@@ -156,8 +156,8 @@ func (t *SimpleChaincode) updateRole(stub shim.ChaincodeStubInterface, args []st
 	}
 	w_id := strings.ToLower(args[0])
 	r_id := strings.ToLower(args[1])
-	dc_id := strings.ToLower(args[1])
-	action := strings.ToLower(args[2])
+	dc_id := strings.ToLower(args[2])
+	action := strings.ToLower(args[3])
 	var unq_id string
 	unq_id = w_id + r_id + dc_id
 	marbleAsBytes, err := stub.GetState(unq_id)
@@ -196,9 +196,9 @@ func (t *SimpleChaincode) updateRole(stub shim.ChaincodeStubInterface, args []st
 
 func (t *SimpleChaincode) accessConsent(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 
-	// role id, start date, end date, column ids, access type, watchdog id
-	if len(args) != 7 {
-		return shim.Error("Incorrect number of arguments. Expecting 7")
+	// role id, start date, end date, column ids, watchdog id, data consumer id
+	if len(args) != 6 {
+		return shim.Error("Incorrect number of arguments. Expecting 6")
 	}
 	// ==== Input sanitation ====
 	fmt.Println("- start init marble")
@@ -217,9 +217,8 @@ func (t *SimpleChaincode) accessConsent(stub shim.ChaincodeStubInterface, args [
 	s_date := strings.ToLower(args[1])
 	e_date := strings.ToLower(args[2])
 	r_id := strings.ToLower(args[0])
-	w_id := strings.ToLower(args[5])
-	dc_id := strings.ToLower(args[6])
-	acctype_id := strings.ToLower(args[4])
+	w_id := strings.ToLower(args[4])
+	dc_id := strings.ToLower(args[5])
 	user_ids := make(map[string]int)
 	count := 0
 	ids := strings.Split(args[3], ",")
@@ -230,7 +229,7 @@ func (t *SimpleChaincode) accessConsent(stub shim.ChaincodeStubInterface, args [
 		return shim.Error("Failed to get marble: " + err.Error())
 	} else if consent != nil {
 		for _, c_id := range ids {
-			unq_id = c_id + r_id + s_date + e_date + acctype_id + w_id
+			unq_id = c_id + r_id + s_date + e_date + w_id
 			marbleAsBytes, err := stub.GetState(unq_id)
 			if err != nil {
 				return shim.Error("Failed to get marble: " + err.Error())
@@ -248,7 +247,7 @@ func (t *SimpleChaincode) accessConsent(stub shim.ChaincodeStubInterface, args [
 			}
 		}
 	} else {
-		return shim.Error("Watchdog has approved role given for the data consumer")
+		return shim.Error("Watchdog has not approved role given for the data consumer")
 	}
 	if count  == 0 {
 		// display error message even no consent certificate can be given
@@ -275,10 +274,10 @@ func remove(s []string, i int) []string {
 
 func (t *SimpleChaincode) updateConsent(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 
-	if len(args) != 8 {
-		return shim.Error("Incorrect number of arguments. Expecting 8")
+	if len(args) != 7 {
+		return shim.Error("Incorrect number of arguments. Expecting 7")
 	}
-	//patient_id, action, role_id, start date, end date, arr[column ids], accessType id, watchdog id
+	//patient_id, action, role_id, start date, end date, arr[column ids], watchdog id
 	// ==== Input sanitation ====
 	//fmt.Println("- start init marble")
 	if len(args[0]) <= 0 {
@@ -296,15 +295,14 @@ func (t *SimpleChaincode) updateConsent(stub shim.ChaincodeStubInterface, args [
 	s_date := strings.ToLower(args[3])
 	e_date := strings.ToLower(args[4])
 	p_id := strings.ToLower(args[0])
-	acctype_id := strings.ToLower(args[6])
 	action := strings.ToLower(args[1])
-	w_id := strings.ToLower(args[7])
+	w_id := strings.ToLower(args[6])
 	r_id := strings.ToLower(args[2])
 	ids := strings.Split(args[5], ",")
 	var unq_id string
 	for _, c_id := range ids {
 		// TODO: we might not need to store all this extra information, can it make a diffence in performance?
-		unq_id = c_id + r_id + s_date + e_date + acctype_id + w_id
+		unq_id = c_id + r_id + s_date + e_date + w_id
 		//fmt.Println(unq_id)
 		marbleAsBytes, err := stub.GetState(unq_id)
 		if err != nil {
@@ -375,10 +373,10 @@ func (t *SimpleChaincode) updateConsent(stub shim.ChaincodeStubInterface, args [
 
 func (t *SimpleChaincode) initialize(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 
-	if len(args) != 8 {
-		return shim.Error("Incorrect number of arguments. Expecting 8")
+	if len(args) != 7 {
+		return shim.Error("Incorrect number of arguments. Expecting 7")
 	}
-	//column id, action, role_id, start date, end date, arr[patient ids], accessType id, watchdog id
+	//column id, action, role_id, start date, end date, arr[patient ids], watchdog id
 	// ==== Input sanitation ====
 	//fmt.Println("- start init marble")
 	if len(args[0]) <= 0 {
@@ -396,9 +394,8 @@ func (t *SimpleChaincode) initialize(stub shim.ChaincodeStubInterface, args []st
 	s_date := strings.ToLower(args[3])
 	e_date := strings.ToLower(args[4])
 	c_id := strings.ToLower(args[0])
-	acctype_id := strings.ToLower(args[6])
 	//action := strings.ToLower(args[1])
-	w_id := strings.ToLower(args[7])
+	w_id := strings.ToLower(args[6])
 	r_id := strings.ToLower(args[2])
 	ids := strings.Split(args[5], ",")
 	var unq_id string
@@ -406,7 +403,7 @@ func (t *SimpleChaincode) initialize(stub shim.ChaincodeStubInterface, args []st
 	for _, p_id := range ids {
 		user_ids[p_id] = 1
 	}
-	unq_id = c_id + r_id + s_date + e_date + acctype_id + w_id
+	unq_id = c_id + r_id + s_date + e_date + w_id
 	marble := &marble{unq_id, user_ids}
 	marbleJSONasBytes, err := json.Marshal(marble)
 	if err != nil {
@@ -500,68 +497,3 @@ func getQueryResultForQueryString(stub shim.ChaincodeStubInterface, queryString 
 
 	return buffer.Bytes(), nil
 }
-
-/*func (t *SimpleChaincode) getHistoryForMarble(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-
-	if len(args) < 1 {
-		return shim.Error("Incorrect number of arguments. Expecting 1")
-	}
-
-	marbleName := args[0]
-
-	fmt.Printf("- start getHistoryForMarble: %s\n", marbleName)
-
-	resultsIterator, err := stub.GetHistoryForKey(marbleName)
-	if err != nil {
-		return shim.Error(err.Error())
-	}
-	defer resultsIterator.Close()
-
-	// buffer is a JSON array containing historic values for the marble
-	var buffer bytes.Buffer
-	buffer.WriteString("[")
-
-	bArrayMemberAlreadyWritten := false
-	for resultsIterator.HasNext() {
-		response, err := resultsIterator.Next()
-		if err != nil {
-			return shim.Error(err.Error())
-		}
-		// Add a comma before array members, suppress it for the first array member
-		if bArrayMemberAlreadyWritten == true {
-			buffer.WriteString(",")
-		}
-		buffer.WriteString("{\"TxId\":")
-		buffer.WriteString("\"")
-		buffer.WriteString(response.TxId)
-		buffer.WriteString("\"")
-
-		buffer.WriteString(", \"Value\":")
-		// if it was a delete operation on given key, then we need to set the
-		//corresponding value null. Else, we will write the response.Value
-		//as-is (as the Value itself a JSON marble)
-		if response.IsDelete {
-			buffer.WriteString("null")
-		} else {
-			buffer.WriteString(string(response.Value))
-		}
-
-		buffer.WriteString(", \"Timestamp\":")
-		buffer.WriteString("\"")
-		buffer.WriteString(time.Unix(response.Timestamp.Seconds, int64(response.Timestamp.Nanos)).String())
-		buffer.WriteString("\"")
-
-		buffer.WriteString(", \"IsDelete\":")
-		buffer.WriteString("\"")
-		buffer.WriteString(strconv.FormatBool(response.IsDelete))
-		buffer.WriteString("\"")
-
-		buffer.WriteString("}")
-		bArrayMemberAlreadyWritten = true
-	}
-	buffer.WriteString("]")
-
-	fmt.Printf("- getHistoryForMarble returning:\n%s\n", buffer.String())
-
-	return shim.Success(buffer.Bytes())
-}*/
