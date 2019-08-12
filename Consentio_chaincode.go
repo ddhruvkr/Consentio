@@ -130,8 +130,8 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 		return t.queryConsent(stub, args)
 	} else if function == "updateConsent" {
 		return t.updateConsent(stub, args)
-	} else if function == "ethicsClearance" {
-		return t.ethicsClearance(stub, args)
+	} else if function == "updateRole" {
+		return t.updateRole(stub, args)
 	} else if function == "initialize" {
 		return t.initialize(stub, args)
 	}
@@ -140,7 +140,7 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 	return shim.Error("Received unknown function invocation")
 }
 
-func (t *SimpleChaincode) ethicsClearance(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+func (t *SimpleChaincode) updateRole(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 
 	if len(args) != 4 {
 		return shim.Error("Incorrect number of arguments. Expecting 4")
