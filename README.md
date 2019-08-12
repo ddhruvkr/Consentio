@@ -1,5 +1,7 @@
 Set of commands that need to be run to invoke the different chaincodes. 
 
+The filename is Consentio_chaincode.go (for the IWS design). The other file is for the RWS design.
+
 ```
 peer chaincode invoke -o orderer.example.com:7050 --tls --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C $CHANNEL_NAME -n CHAINCODE_NAME -c '{"Args":["updateConsent", "2", "g","all", "20150101", "20160101","101", "hippa"]}'
 
