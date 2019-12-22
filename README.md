@@ -1,4 +1,4 @@
-The full version of the paper is present on [[arXiv]](https://arxiv.org/pdf/1910.07110.pdf). We used the FastFabric implementation of Hyperledger Fabric for all our experiments.
+The chaincode for our paper "Consentio: Managing Consent to Data Access using Permissioned Blockchains". The full version of the paper is present on [[arXiv]](https://arxiv.org/pdf/1910.07110.pdf). We used the FastFabric implementation of Hyperledger Fabric for all our experiments.
 
 Set of commands that need to be run to invoke the different chaincodes. 
 
