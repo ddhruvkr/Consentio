@@ -1,3 +1,5 @@
+The full version of the paper is present on [[arXiv]](https://arxiv.org/pdf/1910.07110.pdf). We used the FastFabric implementation of Hyperledger Fabric for all our experiments.
+
 Set of commands that need to be run to invoke the different chaincodes. 
 
 The filename is Consentio_chaincode.go (for the IWS design). The other file is for the RWS design.
