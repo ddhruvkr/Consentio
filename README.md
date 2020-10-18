@@ -1,4 +1,19 @@
-The chaincode for our paper "Consentio: Managing Consent to Data Access using Permissioned Blockchains". The full version of the paper is present on [[arXiv]](https://arxiv.org/pdf/1910.07110.pdf). We used the FastFabric implementation of Hyperledger Fabric for all our experiments.
+The chaincode for our paper "Consentio: Managing Consent to Data Access using Permissioned Blockchains" accepted at IEEE International Conference on Blockchain and Cryptocurrency (ICBC) 2020 
+
+Please cite this paper if you use our code or system output.
+
+```
+@INPROCEEDINGS{9169432,  
+author={R. R. {Agarwal} and D. {Kumar} and L. {Golab} and S. {Keshav}},  
+booktitle={2020 IEEE International Conference on Blockchain and Cryptocurrency (ICBC)},   
+title={Consentio: Managing Consent to Data Access using Permissioned Blockchains},   
+year={2020},  
+volume={},  
+number={},  
+pages={1-9},}
+```
+
+The full version of the paper is present on [[arXiv]](https://arxiv.org/pdf/1910.07110.pdf). We used the FastFabric implementation of Hyperledger Fabric for all our experiments.
 
 Set of commands that need to be run to invoke the different chaincodes. 
 
